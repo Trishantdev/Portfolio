@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trishant — Game Developer</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Archivo+Black&family=Inter:wght@700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --accent: #60d7fb;
+      --accent2: #60d7fb;
+      --text: #e8e8f0;
+      --muted: #9a9ab8;
+      --border: rgba(255,255,255,0.25);
+      --glow: 0 0 40px rgba(96,215,251,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .cursor, .cursor-ring { display: none !important; }
+
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(96,215,251,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(96,215,251,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 200; opacity: 0.4;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; width: 100%;
+      padding: 20px 100px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 100;
+      background: linear-gradient(to bottom, rgba(10,10,15,0.95), transparent);
+      backdrop-filter: blur(10px);
+    }
+    .nav-logo {
+      font-family: 'Inter', sans-serif;
+      font-size: 26px; font-weight: 900;
+      color: var(--accent); letter-spacing: -1px;
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 13px; letter-spacing: 0.05em;
+      transition: color 0.2s; position: relative;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0;
+      width: 0; height: 1px; background: var(--accent); transition: width 0.3s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-links svg { width: 14px; height: 14px; }
+
+    /* Hide nav link text on mobile, show only icons */
+    .nav-link-text { display: inline; }
+
+    /* HERO */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 0 100px; position: relative; z-index: 1;
+    }
+    .hero-label {
+      font-size: 12px; letter-spacing: 0.2em; color: var(--accent);
+      margin-bottom: 24px; opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.2s;
+    }
+    .hero-name {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: clamp(68px, 10vw, 130px);
+      font-weight: 400; line-height: 0.95;
+      letter-spacing: -2px; margin-bottom: 32px;
+      opacity: 0; animation: fadeUp 0.6s ease forwards 0.4s;
+    }
+    .hero-name em {
+      font-style: normal;
+      -webkit-text-stroke: 1px var(--text); color: transparent;
+    }
+    .hero-desc {
+      max-width: 560px; color: #8e8ea8;
+      font-size: 14px; line-height: 1.9; margin-bottom: 48px;
+      opacity: 0; animation: fadeUp 0.6s ease forwards 0.6s;
+    }
+    .hero-desc .hl { color: #ffffff; font-weight: 500; }
+
+    .hero-cta {
+      display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.6s ease forwards 0.8s;
+    }
+
+    /* Pill buttons */
+    .btn-pill {
+      display: flex; align-items: center; gap: 8px;
+      padding: 13px 28px; border: 1px solid var(--border);
+      border-radius: 50px; color: var(--text); text-decoration: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px; letter-spacing: 0.06em;
+      background: var(--surface);
+      transition: border-color 0.3s, color 0.3s, box-shadow 0.3s, transform 0.2s;
+    }
+    .btn-pill:hover {
+      border-color: var(--accent); color: var(--accent);
+      box-shadow: var(--glow); transform: translateY(-2px);
+    }
+    .btn-pill svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+
+
+    /* SECTION COMMONS */
+    section { position: relative; z-index: 1; }
+    .section-inner { max-width: 1400px; margin: 0 auto; padding: 100px 100px; }
+    .section-title {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: clamp(38px, 5.5vw, 72px);
+      font-weight: 400; line-height: 1.05;
+      letter-spacing: -1px; margin-bottom: 16px;
+    }
+
+    /* SKILLS */
+    #skills { padding: 0; }
+    .skills-header { text-align: center; margin-bottom: 48px; }
+    .skills-subtitle {
+      text-align: center; color: var(--muted);
+      font-size: 14px; line-height: 1.7;
+      margin-bottom: 0; margin-top: 8px;
+    }
+    .skill-cards-grid {
+      display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+    }
+    .skill-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 28px;
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px; letter-spacing: 0.06em;
+      transition: border-color 0.3s, color 0.3s, box-shadow 0.3s, transform 0.2s;
+    }
+    .skill-card:hover {
+      border-color: var(--accent); color: var(--accent);
+      box-shadow: var(--glow); transform: translateY(-3px);
+    }
+    .skill-card svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+    /* PROJECTS */
+    #projects { padding: 0; }
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .game-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 14px 20px;
+      display: flex; flex-direction: column;
+      transition: transform 0.08s ease-out,
+                  border-color 0.08s ease-out,
+                  box-shadow 0.08s ease-out,
+                  background 0.08s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Shimmer overlay on hover (PC only) */
+    .game-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 16px;
+      background: linear-gradient(
+        135deg,
+        rgba(96,215,251,0.06) 0%,
+        rgba(96,215,251,0.04) 50%,
+        transparent 100%
+      );
+      opacity: 0;
+      transition: opacity 0.08s ease-out;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top accent line */
+    .game-card::after {
+      content: '';
+      position: absolute; top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.08s ease-out;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @media (hover: hover) {
+      .game-card:hover {
+        border-color: rgba(96,215,251,0.5) !important;
+        background: #15151f !important;
+        transform: scale(1.05) !important;
+        box-shadow:
+          0 0 0 1px rgba(96,215,251,0.15),
+          0 24px 64px rgba(0,0,0,0.5),
+          0 0 40px rgba(96,215,251,0.12) !important;
+        opacity: 1 !important;
+        z-index: 10;
+      }
+      .game-card:hover::before { opacity: 1; }
+      .game-card:hover::after  { opacity: 1; }
+
+      .game-card:hover .game-title {
+        color: var(--accent);
+      }
+      .game-card:hover .game-thumb {
+        border-color: rgba(96,215,251,0.15);
+      }
+    }
+
+    .game-title {
+      transition: color 0.08s ease-out;
+    }
+    .game-thumb {
+      transition: border-color 0.08s ease-out;
+    }
+
+    .game-thumb {
+      width: 100%; aspect-ratio: 4/3;
+      background: #0d0d14;
+      border-radius: 10px; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(255,255,255,0.05);
+      font-size: 48px; overflow: hidden;
+    }
+    .game-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+    .game-info { padding: 0 4px; flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; }
+    .game-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 18px; font-weight: 800;
+      margin-bottom: 6px; color: var(--text); letter-spacing: 0.3px;
+    }
+    .game-desc {
+      font-size: 12px; color: var(--muted);
+      line-height: 1.6; margin-bottom: 16px; flex: 1;
+    }
+    .btn-play {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 12px 20px; border: 1px solid var(--border);
+      border-radius: 50px; color: var(--text); text-decoration: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px; letter-spacing: 0.06em;
+      background: var(--surface2);
+      transition: border-color 0.3s, color 0.3s, box-shadow 0.3s, transform 0.2s;
+    }
+    .btn-play:hover {
+      border-color: var(--accent); color: var(--accent);
+      box-shadow: var(--glow); transform: translateY(-2px);
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 100px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: relative; z-index: 1;
+    }
+    .footer-copy { font-size: 12px; color: var(--muted); }
+    .footer-socials { display: flex; gap: 24px; }
+    .footer-socials a {
+      font-size: 12px; letter-spacing: 0.1em;
+      color: var(--muted); text-decoration: none; transition: color 0.2s;
+    }
+    .footer-socials a:hover { color: var(--accent); }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(96,215,251,0.4); }
+      50%      { opacity:.7; box-shadow: 0 0 0 6px rgba(96,215,251,0); }
+    }
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* RESPONSIVE */
+    /* DESKTOP */
+    @media (min-width: 1201px) {
+      nav { padding: 20px 100px; }
+      #hero { padding: 0 100px; }
+      .section-inner { padding: 100px 100px; }
+      footer { padding: 40px 100px; }
+      .games-grid { grid-template-columns: repeat(3, 1fr); }
+      body { font-size: 15px; }
+    }
+
+    /* TABLET LANDSCAPE */
+    @media (min-width: 901px) and (max-width: 1200px) {
+      nav { padding: 18px 60px; }
+      #hero { padding: 0 60px; }
+      .section-inner { padding: 80px 60px; }
+      footer { padding: 35px 60px; }
+      .games-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+      .hero-name { font-size: clamp(52px, 8vw, 100px); }
+      .section-title { font-size: clamp(36px, 5vw, 70px); }
+      .btn-pill { padding: 11px 22px; font-size: 12px; }
+      .skill-card { padding: 11px 22px; font-size: 12px; }
+      body { font-size: 14px; }
+    }
+
+    /* TABLET PORTRAIT */
+    @media (min-width: 601px) and (max-width: 900px) {
+      nav { padding: 16px 40px; }
+      #hero { padding: 0 40px; }
+      .section-inner { padding: 70px 40px; }
+      footer { padding: 30px 40px; }
+      .games-grid {
+        display: flex !important;
+        grid-template-columns: none !important;
+        overflow-x: scroll;
+        scroll-snap-type: x mandatory;
+        gap: 14px;
+        padding: 10px 28px 28px;
+        margin: 0 -40px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      
+      .games-grid::-webkit-scrollbar { 
+        display: none; 
+      }
+      .game-card {
+        flex: 0 0 70vw;
+        max-width: 300px;
+        scroll-snap-align: center;
+      }
+      .hero-name { font-size: clamp(48px, 10vw, 90px); }
+      .section-title { font-size: clamp(32px, 6vw, 60px); }
+      .hero-label { font-size: 11px; }
+      .hero-desc { font-size: 13px; max-width: 100%; }
+      .btn-pill { padding: 10px 20px; font-size: 12px; }
+      .skill-card { padding: 10px 20px; font-size: 11px; }
+      .game-title { font-size: 16px; }
+      body { font-size: 13px; }
+    }
+
+    /* MOBILE */
+    @media (max-width: 600px) {
+      nav { padding: 14px 18px; }
+      .nav-logo { font-size: 18px; }
+      .nav-links { gap: 14px; }
+      .nav-link-text { display: none; }
+      
+      #hero { 
+        padding: 0 18px; 
+        min-height: 85vh;
+        justify-content: flex-start;
+        padding-top: 120px;
+      }
+      
+      .hero-label { 
+        font-size: 10px; 
+        letter-spacing: 0.15em;
+        margin-bottom: 16px;
+      }
+      
+      .hero-name { 
+        font-size: clamp(42px, 12vw, 72px); 
+        margin-bottom: 20px;
+      }
+      
+      .hero-desc { 
+        font-size: 12px; 
+        line-height: 1.7;
+        margin-bottom: 24px;
+        max-width: 100%;
+      }
+      
+      .hero-cta { gap: 10px; }
+      
+      .btn-pill { 
+        padding: 10px 18px; 
+        font-size: 11px;
+        gap: 6px;
+      }
+      
+      .btn-pill svg { width: 13px; height: 13px; }
+      
+      .section-inner { 
+        padding: 60px 18px; 
+      }
+      
+      footer { 
+        padding: 24px 18px;
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+      }
+      
+      .footer-socials { justify-content: center; }
+      
+      .games-grid {
+        display: flex !important;
+        grid-template-columns: none !important;
+        overflow-x: scroll;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        gap: 12px;
+        padding: 10px 18px 28px;
+        margin: 0 -18px;
+        scrollbar-width: none;
+      }
+      
+      .games-grid::-webkit-scrollbar { 
+        display: none; 
+      }
+
+      /* Hide scrollbar completely */
+      .games-grid {
+        -ms-overflow-style: none;
+      }
+      
+      .game-card {
+        flex: 0 0 85vw;
+        max-width: 100%;
+        scroll-snap-align: center;
+        opacity: 0.38;
+        transform: scale(0.85);
+        padding: 12px 12px 16px;
+        border-radius: 12px;
+      }
+      
+      .game-card.snap-active {
+        opacity: 1 !important;
+        transform: scale(1) !important;
+      }
+      
+      .game-title { font-size: 14px; }
+      .game-desc { font-size: 11px; }
+      .btn-play { padding: 10px 16px; font-size: 11px; }
+      .skill-card { padding: 9px 16px; font-size: 10px; }
+      
+      .section-title { 
+        font-size: clamp(28px, 8vw, 50px);
+        text-align: center;
+      }
+      
+      .skills-subtitle { font-size: 12px; }
+      
+      /* Snap nav dots */
+      .snap-nav { gap: 12px; margin-top: 16px; }
+      .snap-btn { width: 32px; height: 32px; }
+      .snap-dot { width: 5px; height: 5px; }
+      .snap-dot.active { width: 16px; }
+      
+      body { font-size: 13px; }
+    }
+
+    /* SMALL MOBILE */
+    @media (max-width: 400px) {
+      nav { padding: 12px 14px; }
+      .nav-logo { font-size: 16px; }
+      
+      #hero { 
+        padding: 0 14px;
+        padding-top: 100px;
+      }
+      
+      .hero-name { 
+        font-size: clamp(32px, 11vw, 60px); 
+        margin-bottom: 16px;
+        letter-spacing: -1px;
+      }
+      
+      .hero-desc { 
+        font-size: 11px; 
+        margin-bottom: 20px;
+      }
+      
+      .hero-label { font-size: 9px; margin-bottom: 12px; }
+      
+      .hero-cta { gap: 8px; }
+      .btn-pill { padding: 9px 14px; font-size: 10px; }
+      
+      .section-inner { padding: 50px 14px; }
+      footer { padding: 20px 14px; }
+      
+      .games-grid { margin: 0 -14px; }
+      .game-card { flex: 0 0 88vw; }
+      
+      .skill-card { 
+        padding: 8px 12px; 
+        font-size: 9px;
+        gap: 6px;
+      }
+      
+      .skill-card svg { width: 16px; height: 16px; }
+    }
+
+    /* Extra small devices */
+    @media (max-width: 320px) {
+      #hero { padding-top: 90px; }
+      .hero-name { font-size: clamp(28px, 10vw, 50px); }
+      .section-title { font-size: clamp(24px, 6vw, 40px); }
+    }
+
+    /* SNAP NAVIGATION STYLES */
+    .snap-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .snap-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1.5px solid var(--accent);
+      background: rgba(96, 215, 251, 0.05);
+      color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      hover: none;
+    }
+
+    .snap-btn:hover {
+      background: rgba(96, 215, 251, 0.15);
+      box-shadow: 0 0 20px rgba(96, 215, 251, 0.3);
+      transform: scale(1.1);
+    }
+
+    .snap-btn:active {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 12px rgba(96,215,251,0.3);
+      transform: scale(0.95);
+    }
+
+    .snap-btn svg { width: 18px; height: 18px; }
+
+    .snap-dots {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .snap-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(96, 215, 251, 0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(96, 215, 251, 0.5);
+    }
+
+    .snap-dot:hover {
+      background: rgba(96, 215, 251, 0.5);
+      transform: scale(1.2);
+    }
+
+    .snap-dot.active {
+      background: var(--accent);
+      transform: scale(1.3);
+      width: 20px;
+      border-radius: 4px;
+      border-color: var(--accent);
+    }
+
+    @media (max-width: 900px) {
+      .snap-nav { display: flex; }
+      .snap-btn { width: 36px; height: 36px; }
+      .snap-btn svg { width: 16px; height: 16px; }
+    }
+
+    /* Hide custom cursor on touch screens */
+    @media (pointer: coarse) {
+      .cursor, .cursor-ring { display: none !important; }
+      body { cursor: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">Trishant</a>
+    <div class="nav-links">
+      <a href="https://github.com/Trishantdev" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
+        <span class="nav-link-text">GitHub</span>
+      </a>
+      <a href="#projects">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span class="nav-link-text">Projects</span>
+      </a>
+      <a href="https://mail.google.com/mail/?view=cm&to=hellotrishant@gmail.com" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
+        <span class="nav-link-text">Email</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-label">// Game Developer &amp; Programmer — Building Worlds with Code</div>
+    <h1 class="hero-name">Hi, I'm<br><em>Trishant</em></h1>
+    <p class="hero-desc">
+      <span class="hl">Unity Game Developer</span> specializing in <span class="hl">C#</span> systems design, <span class="hl">AI logic</span>, and <span class="hl">performance optimization</span> — building polished, production-ready experiences for <span class="hl">mobile</span> and <span class="hl">PC</span>.
+    </p>
+    <div class="hero-cta">
+      <a href="#skills" class="btn-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Skills
+      </a>
+      <a href="#projects" class="btn-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Projects
+      </a>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="section-inner">
+      <div class="skills-header">
+        <h2 class="section-title reveal" style="text-align:center;">Skills</h2>
+        <p class="skills-subtitle reveal">Using these tools to turn imagination into playable experiences.</p>
+      </div>
+      <div class="skill-cards-grid">
+
+        <div class="skill-card reveal">
+          <svg viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="6" fill="#6A1577"/>
+            <text x="16" y="22" text-anchor="middle" font-size="14" font-weight="bold" fill="white" font-family="monospace">C#</text>
+          </svg>
+          C Sharp
+        </div>
+
+        <div class="skill-card reveal" style="transition-delay:0.07s">
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="6" fill="#222"/>
+            <polygon points="16,5 26,11 26,22 16,28 6,22 6,11" fill="none" stroke="#60d7fb" stroke-width="1.5"/>
+            <circle cx="16" cy="16" r="3" fill="#60d7fb"/>
+          </svg>
+          Unity
+        </div>
+
+        <div class="skill-card reveal" style="transition-delay:0.14s">
+          <svg viewBox="0 0 24 24" fill="#e8e8f0">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/>
+          </svg>
+          GitHub
+        </div>
+
+        <div class="skill-card reveal" style="transition-delay:0.21s">
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="6" fill="#5C2D91"/>
+            <path d="M20 6L10 14l-4-3-2 2 4 3-4 3 2 2 4-3 10 8V6zm0 4.5v11L13 16l7-5.5z" fill="white"/>
+          </svg>
+          Visual Studio
+        </div>
+
+        <div class="skill-card reveal" style="transition-delay:0.28s">
+          <svg viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="6" fill="#1a1a1a"/>
+            <circle cx="16" cy="15" r="5.5" fill="none" stroke="#F4792B" stroke-width="2"/>
+            <circle cx="16" cy="15" r="2.5" fill="#F4792B"/>
+            <line x1="16" y1="5" x2="16" y2="9" stroke="#F4792B" stroke-width="2" stroke-linecap="round"/>
+            <line x1="16" y1="21" x2="16" y2="25" stroke="#F4792B" stroke-width="2" stroke-linecap="round"/>
+            <line x1="7" y1="21" x2="25" y2="21" stroke="#F4792B" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Blender
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="section-inner">
+      <h2 class="section-title reveal">My Games</h2>
+      <div class="games-grid">
+
+        <div class="game-card reveal">
+          <div class="game-thumb">🎮</div>
+          <div class="game-info">
+            <h3 class="game-title">Game Title One</h3>
+            <p class="game-desc">Short description of the game</p>
+            <a href="https://itch.io/" target="_blank" class="btn-play">▶ Play</a>
+          </div>
+        </div>
+
+        <div class="game-card reveal" style="transition-delay:0.07s">
+          <div class="game-thumb">👾</div>
+          <div class="game-info">
+            <h3 class="game-title">Game Title Two</h3>
+            <p class="game-desc">Short description of the game</p>
+            <a href="https://itch.io/" target="_blank" class="btn-play">▶ Play</a>
+          </div>
+        </div>
+
+        <div class="game-card reveal" style="transition-delay:0.14s">
+          <div class="game-thumb">🏆</div>
+          <div class="game-info">
+            <h3 class="game-title">Game Title Three</h3>
+            <p class="game-desc">Short description of the game</p>
+            <a href="https://itch.io/" target="_blank" class="btn-play">▶ Play</a>
+          </div>
+        </div>
+
+        <div class="game-card reveal" style="transition-delay:0.21s">
+          <div class="game-thumb">🌌</div>
+          <div class="game-info">
+            <h3 class="game-title">Game Title Four</h3>
+            <p class="game-desc">Short description of the game</p>
+            <a href="https://itch.io/" target="_blank" class="btn-play">▶ Play</a>
+          </div>
+        </div>
+
+        <div class="game-card reveal" style="transition-delay:0.28s">
+          <div class="game-thumb">⚔️</div>
+          <div class="game-info">
+            <h3 class="game-title">Game Title Five</h3>
+            <p class="game-desc">Short description of the game</p>
+            <a href="https://itch.io/" target="_blank" class="btn-play">▶ Play</a>
+          </div>
+        </div>
+
+        <div class="game-card reveal" style="transition-delay:0.35s">
+          <div class="game-thumb">🚀</div>
+          <div class="game-info">
+            <h3 class="game-title">Game Title Six</h3>
+            <p class="game-desc">Short description of the game</p>
+            <a href="https://itch.io/" target="_blank" class="btn-play">▶ Play</a>
+          </div>
+        </div>
+
+      </div>
+      <!-- Snap nav for mobile -->
+      <div class="snap-nav" id="snapNav">
+        <button class="snap-btn" id="snapPrev">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="snap-dots" id="snapDots">
+          <div class="snap-dot active"></div>
+          <div class="snap-dot"></div>
+          <div class="snap-dot"></div>
+          <div class="snap-dot"></div>
+          <div class="snap-dot"></div>
+          <div class="snap-dot"></div>
+        </div>
+        <button class="snap-btn" id="snapNext">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT BUTTON -->
+  <div style="display:flex; justify-content:center; padding: 0 24px 60px; position:relative; z-index:1;">
+    <a href="https://mail.google.com/mail/?view=cm&to=hellotrishant@gmail.com" target="_blank" class="btn-pill" style="gap:10px; padding: 16px 36px; font-size:14px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
+      Contact Me
+    </a>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-copy">© 2026 Trishant — All rights reserved</div>
+    <div class="footer-socials">
+      <a href="https://github.com/Trishantdev" target="_blank">GitHub</a>
+      <a href="https://itch.io/" target="_blank">itch.io</a>
+      <a href="https://mail.google.com/mail/?view=cm&to=hellotrishant@gmail.com" target="_blank">Email</a>
+    </div>
+  </footer>
+
+  <script>
+    // Always start at top on refresh
+    window.scrollTo(0, 0);
+    history.scrollRestoration = 'manual';
+
+    // Detect touch device — disable cursor & particles on mobile/Android
+    // Use pointer: coarse to detect actual touch screens (phones/tablets)
+    // This won't wrongly flag touch-enabled laptops running Chrome
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    const ring   = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    if (!isTouchDevice) {
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+        spawnParticle(mx, my);
+      });
+      (function tick() {
+        rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+        ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+        requestAnimationFrame(tick);
+      })();
+      document.querySelectorAll('a, button, .game-card, .skill-card').forEach(el => {
+        el.addEventListener('mouseenter', () => { cursor.style.width='20px'; cursor.style.height='20px'; ring.style.width='56px'; ring.style.height='56px'; });
+        el.addEventListener('mouseleave', () => { cursor.style.width='12px'; cursor.style.height='12px'; ring.style.width='36px'; ring.style.height='36px'; });
+      });
+    }
+
+    // Magical particle trail (desktop only)
+    const colors = ['#60d7fb', '#60d7fb', '#ffffff', '#60d7fb', '#60d7fb'];
+    function spawnParticle(x, y) {
+      if (isTouchDevice) return;
+      const p = document.createElement('div');
+      const size = Math.random() * 8 + 3;
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const angle = Math.random() * 360;
+      const distance = Math.random() * 40 + 10;
+      const duration = Math.random() * 600 + 400;
+      p.style.cssText = `
+        position: fixed;
+        left: ${x}px; top: ${y}px;
+        width: ${size}px; height: ${size}px;
+        border-radius: 50%;
+        background: ${color};
+        pointer-events: none;
+        z-index: 9997;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 ${size * 2}px ${color};
+        opacity: 1;
+        transition: none;
+      `;
+      document.body.appendChild(p);
+      const rad = angle * Math.PI / 180;
+      const tx = Math.cos(rad) * distance;
+      const ty = Math.sin(rad) * distance;
+      requestAnimationFrame(() => {
+        p.style.transition = `transform ${duration}ms ease-out, opacity ${duration}ms ease-out`;
+        p.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0)`;
+        p.style.opacity = '0';
+      });
+      setTimeout(() => p.remove(), duration);
+    }
+
+    // Scroll reveal
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.05 });
+    document.querySelectorAll('.reveal').forEach(r => obs.observe(r));
+
+    // ── Snap scroll: highlight active card + dots ──
+    (function() {
+      const grid = document.querySelector('.games-grid');
+      const cards = document.querySelectorAll('.game-card');
+      const dots = document.querySelectorAll('.snap-dot');
+      if (!grid || !cards.length) return;
+
+      let activeIdx = 0;
+
+      function updateActive() {
+        const gridRect = grid.getBoundingClientRect();
+        const centerX = gridRect.left + gridRect.width / 2;
+        let closest = 0, minDist = Infinity;
+
+        cards.forEach((card, i) => {
+          const rect = card.getBoundingClientRect();
+          const cardCenter = rect.left + rect.width / 2;
+          const dist = Math.abs(cardCenter - centerX);
+          if (dist < minDist) { minDist = dist; closest = i; }
+        });
+
+        if (closest === activeIdx) return;
+        activeIdx = closest;
+
+        cards.forEach((c, i) => {
+          c.classList.toggle('snap-active', i === activeIdx);
+        });
+        dots.forEach((d, i) => {
+          d.classList.toggle('active', i === activeIdx);
+        });
+      }
+
+      // Set first card active immediately
+      cards[0].classList.add('snap-active');
+
+      let scrollTimer;
+      grid.addEventListener('scroll', () => {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(updateActive, 60);
+      }, { passive: true });
+
+      // Prev / Next buttons
+      const prevBtn = document.getElementById('snapPrev');
+      const nextBtn = document.getElementById('snapNext');
+
+      function scrollToCard(index) {
+        if (index < 0) index = 0;
+        if (index >= cards.length) index = cards.length - 1;
+        cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        setTimeout(updateActive, 350);
+      }
+
+      if (prevBtn) prevBtn.addEventListener('click', () => scrollToCard(activeIdx - 1));
+      if (nextBtn) nextBtn.addEventListener('click', () => scrollToCard(activeIdx + 1));
+
+      // Also update on touch end for snappier feel
+      grid.addEventListener('touchend', () => {
+        setTimeout(updateActive, 200);
+      }, { passive: true });
+    })();
+  </script>
+</body>
+</html>
